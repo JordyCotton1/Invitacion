@@ -610,16 +610,15 @@
           <aside class="invite-panel" aria-labelledby="inviteTitle">
             <h2 id="inviteTitle">Confirma tu invitaci&oacute;n</h2>
             <form class="invite-form" id="inviteForm">
-              <label for="guestName">Apellidos de su familia</label>
+              <label for="guestName">Apellido paterno y luego materno</label>
               <input
                 id="guestName"
                 name="guestName"
                 type="text"
                 autocomplete="name"
-                placeholder="Ej. Diaz Rosales"
               />
               <p class="invite-status" id="inviteStatus" aria-live="polite">
-                Escribe los apellidos de tu familia para buscar tu invitaci&oacute;n.
+                Escribe primero el apellido paterno y luego el materno para buscar tu invitaci&oacute;n.
               </p>
               <div class="invite-actions" id="inviteActions">
                 <button type="button" data-response="confirmada">Confirmar</button>
@@ -836,7 +835,7 @@
         setAdminVisible(false);
 
         if (fullName.length < 4) {
-          setStatus("Escribe los apellidos de tu familia para buscar tu invitacion.");
+          setStatus("Escribe primero el apellido paterno y luego el materno para buscar tu invitacion.");
           return;
         }
 
