@@ -618,7 +618,7 @@
           <aside class="invite-panel" aria-labelledby="inviteTitle">
             <h2 id="inviteTitle">Confirma tu invitaci&oacute;n</h2>
             <form class="invite-form" id="inviteForm">
-              <label for="guestName">Apellido paterno y luego materno</label>
+              <label for="guestName">Escriba su nombre y apellido</label>
               <input
                 id="guestName"
                 name="guestName"
@@ -626,7 +626,7 @@
                 autocomplete="name"
               />
               <p class="invite-status" id="inviteStatus" aria-live="polite">
-                Escribe primero el apellido paterno y luego el materno para buscar tu invitaci&oacute;n.
+                Escriba su nombre y apellido para buscar su invitaci&oacute;n.
               </p>
               <div class="invite-actions" id="inviteActions">
                 <button type="button" data-response="confirmada">Confirmar</button>
@@ -750,6 +750,24 @@
         return parts.length > 0 ? parts[0] : "";
       }
 
+      function getFamilySearchCandidates(name) {
+        const parts = getSearchParts(name);
+        const candidates = new Set();
+
+        if (parts.length > 0) {
+          candidates.add(parts[parts.length - 1]);
+        }
+
+        if (parts.length >= 2) {
+          candidates.add(parts.slice(-2).join(" "));
+        }
+
+        candidates.add(normalizeForSearch(getFamilyName(name)));
+        candidates.add(normalizeForSearch(name));
+
+        return [...candidates].filter(Boolean);
+      }
+
       async function getGuestCandidates(searchTerm) {
         const { data, error } = await supabaseClient
           .from(GUESTS_TABLE)
@@ -776,6 +794,7 @@
         const normalizedSearch = normalizeForSearch(searchText);
         const searchFamily = normalizeForSearch(getFamilyName(searchText));
         const searchParts = getSearchParts(searchText).filter((part) => part.length >= 3);
+        const familyCandidates = getFamilySearchCandidates(searchText);
 
         return guests.find((guest) => {
           const guestName = normalizeForSearch(guest.nombre_completo);
@@ -783,6 +802,15 @@
           const matchesSearchParts =
             searchParts.length > 0 &&
             searchParts.every((part) => guestName.includes(part));
+          const matchesFamilyCandidate = familyCandidates.some((candidate) => {
+            const candidateParts = candidate.split(" ").filter(Boolean);
+            return (
+              guestFamily === candidate ||
+              guestFamily.includes(candidate) ||
+              guestName.includes(candidate) ||
+              candidateParts.every((part) => guestFamily.includes(part))
+            );
+          });
 
           return (
             guestName === normalizedSearch ||
@@ -790,6 +818,7 @@
             guestFamily === searchFamily ||
             guestFamily.includes(normalizedSearch) ||
             guestFamily.includes(searchFamily) ||
+            matchesFamilyCandidate ||
             matchesSearchParts ||
             guestName.includes(normalizedSearch)
           );
@@ -843,7 +872,7 @@
         setAdminVisible(false);
 
         if (fullName.length < 4) {
-          setStatus("Escribe primero el apellido paterno y luego el materno para buscar tu invitacion.");
+          setStatus("Escriba su nombre y apellido para buscar su invitacion.");
           return;
         }
 
