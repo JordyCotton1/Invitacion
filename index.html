@@ -44,16 +44,25 @@
 
       body {
         margin: 0;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
         background: var(--green-950);
         color: var(--cream);
         font-family: "Montserrat", Arial, sans-serif;
       }
 
+      body::-webkit-scrollbar,
+      .hero::-webkit-scrollbar {
+        display: none;
+      }
+
       .hero {
         position: relative;
-        height: var(--viewport-h);
-        overflow: hidden;
+        min-height: var(--viewport-h);
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
         background: url("qq.png") center / cover no-repeat;
         isolation: isolate;
       }
@@ -308,8 +317,7 @@
       .guest-list {
         display: none;
         gap: 0.85rem;
-        max-height: 260px;
-        overflow: auto;
+        overflow: visible;
         padding-right: 0.2rem;
       }
 
