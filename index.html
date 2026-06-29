@@ -731,6 +731,28 @@
         return parts.length > 0 ? parts[0] : "";
       }
 
+      async function getGuestCandidates(searchTerm) {
+        const { data, error } = await supabaseClient
+          .from(GUESTS_TABLE)
+          .select("id,nombre_completo,respuesta")
+          .ilike("nombre_completo", `%${searchTerm}%`)
+          .limit(25);
+
+        if (error) {
+          return { data: null, error };
+        }
+
+        if (data.length > 0) {
+          return { data, error: null };
+        }
+
+        return supabaseClient
+          .from(GUESTS_TABLE)
+          .select("id,nombre_completo,respuesta")
+          .order("nombre_completo", { ascending: true })
+          .limit(1000);
+      }
+
       function findBestGuest(guests, searchText) {
         const normalizedSearch = normalizeForSearch(searchText);
         const searchFamily = normalizeForSearch(getFamilyName(searchText));
@@ -807,18 +829,30 @@
 
         setStatus("Buscando invitacion...");
 
-        const { data, error } = await supabaseClient
-          .from(GUESTS_TABLE)
-          .select("id,nombre_completo,respuesta")
-          .ilike("nombre_completo", `%${searchTerm}%`)
-          .limit(25);
+        let { data, error } = await getGuestCandidates(searchTerm);
 
         if (error) {
           setStatus("No se pudo buscar el nombre. Revisa tu tabla de Supabase.", true);
           return;
         }
 
-        const guest = findBestGuest(data, fullName);
+        let guest = findBestGuest(data, fullName);
+
+        if (!guest && data.length < 1000) {
+          const fallback = await supabaseClient
+            .from(GUESTS_TABLE)
+            .select("id,nombre_completo,respuesta")
+            .order("nombre_completo", { ascending: true })
+            .limit(1000);
+
+          if (fallback.error) {
+            setStatus("No se pudo buscar el nombre. Revisa tu tabla de Supabase.", true);
+            return;
+          }
+
+          data = fallback.data;
+          guest = findBestGuest(data, fullName);
+        }
 
         if (!guest) {
           setStatus("No encontramos ese nombre o familia.", true);
@@ -1041,5 +1075,4 @@
     </script>
   </body>
 </html>
-
 
