@@ -610,16 +610,16 @@
           <aside class="invite-panel" aria-labelledby="inviteTitle">
             <h2 id="inviteTitle">Confirma tu invitaci&oacute;n</h2>
             <form class="invite-form" id="inviteForm">
-              <label for="guestName">Nombre completo o apellido de su familia</label>
+              <label for="guestName">Apellidos de su familia</label>
               <input
                 id="guestName"
                 name="guestName"
                 type="text"
                 autocomplete="name"
-                placeholder="Nombre completo o familia"
+                placeholder="Ej. Diaz Rosales"
               />
               <p class="invite-status" id="inviteStatus" aria-live="polite">
-                Escribe tu nombre o apellido de familia para buscar tu invitaci&oacute;n.
+                Escribe los apellidos de tu familia para buscar tu invitaci&oacute;n.
               </p>
               <div class="invite-actions" id="inviteActions">
                 <button type="button" data-response="confirmada">Confirmar</button>
@@ -701,13 +701,25 @@
           .toLowerCase();
       }
 
+      function getSearchParts(name) {
+        const ignoredWords = ["familia", "fam", "de", "del", "la", "las", "los", "su"];
+        return normalizeForSearch(name)
+          .split(" ")
+          .filter((part) => part && !ignoredWords.includes(part));
+      }
+
       function getFamilyName(name) {
-        const parts = normalizeName(name).split(" ").filter(Boolean);
+        const originalParts = normalizeName(name).split(" ").filter(Boolean);
+        const searchParts = getSearchParts(name);
+        const parts = originalParts.filter((part) =>
+          searchParts.includes(normalizeForSearch(part))
+        );
+
         if (parts.length >= 2) {
           return parts.slice(-2).join(" ");
         }
 
-        return normalizeName(name);
+        return parts.length > 0 ? parts[0] : normalizeName(name);
       }
 
       function formatName(name) {
@@ -723,7 +735,7 @@
       }
 
       function getSearchTerm(name) {
-        const parts = normalizeName(name).split(" ").filter(Boolean);
+        const parts = getSearchParts(name);
         if (parts.length >= 2) {
           return parts.slice(-2).join(" ");
         }
@@ -756,16 +768,22 @@
       function findBestGuest(guests, searchText) {
         const normalizedSearch = normalizeForSearch(searchText);
         const searchFamily = normalizeForSearch(getFamilyName(searchText));
+        const searchParts = getSearchParts(searchText).filter((part) => part.length >= 3);
 
         return guests.find((guest) => {
           const guestName = normalizeForSearch(guest.nombre_completo);
           const guestFamily = normalizeForSearch(getFamilyName(guest.nombre_completo));
+          const matchesSearchParts =
+            searchParts.length > 0 &&
+            searchParts.every((part) => guestName.includes(part));
 
           return (
             guestName === normalizedSearch ||
             guestFamily === normalizedSearch ||
             guestFamily === searchFamily ||
             guestFamily.includes(normalizedSearch) ||
+            guestFamily.includes(searchFamily) ||
+            matchesSearchParts ||
             guestName.includes(normalizedSearch)
           );
         });
@@ -818,7 +836,7 @@
         setAdminVisible(false);
 
         if (fullName.length < 4) {
-          setStatus("Escribe tu nombre o apellido de familia para buscar tu invitacion.");
+          setStatus("Escribe los apellidos de tu familia para buscar tu invitacion.");
           return;
         }
 
@@ -1075,4 +1093,3 @@
     </script>
   </body>
 </html>
-
